@@ -14,7 +14,7 @@ serve(async (req: Request) => {
   });
 
   const isValid = await r.verify({
-    signature: signature,,
+    signature: signature,
     body: await req.text(),
   }).catch((err: Error) => {
     console.error(err);
