@@ -1,16 +1,26 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-
-const { SLACK_BOT_TOKEN, WEBHOOK_URL, UID } = Deno.env.toObject();
+import { Receiver } from "https://deno.land/x/upstash_qstash@v0.1.4/mod.ts";
 
 serve(async (req: Request) => {
-  const url = new URL(req.url);
-  const secret = url.searchParams.get('secret');
+  const r = new Receiver({
+    currentSigningKey: Deno.env.get("QSTASH_CURRENT_SIGNING_KEY")!,
+    nextSigningKey: Deno.env.get("QSTASH_NEXT_SIGNING_KEY")!,
+  });
 
-  if (!secret || secret !== SLACK_BOT_TOKEN) {
-    return new Response('Invalid token', {
-      status: 403
-    });
+  const isValid = await r.verify({
+    signature: req.headers.get("Upstash-Signature")!,
+    body: await req.text(),
+  }).catch((err: Error) => {
+    console.error(err);
+    return false;
+  });
+
+  if (!isValid) {
+    return new Response("Invalid signature", { status: 401 });
   }
+
+  console.log("The signature was valid");
+  const { WEBHOOK_URL, UID } = Deno.env.toObject();
 
   await fetch(WEBHOOK_URL, {
     method: 'POST',
