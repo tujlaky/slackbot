@@ -1,7 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-import { parse } from 'https://deno.land/std/flags/mod.ts';
 
-const { SLACK_BOT_TOKEN, WEBHOOK_URL, UID } = parse(Deno.args);
+const { SLACK_BOT_TOKEN, WEBHOOK_URL, UID } = Deno.env.toObject();
 
 serve(async (req: Request) => {
   const url = new URL(req.url);
